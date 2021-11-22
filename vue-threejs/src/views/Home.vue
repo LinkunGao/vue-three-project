@@ -1,0 +1,102 @@
+<template>
+  <div id="main">
+    <canvas id="bg"></canvas>
+    <button class="btn" @click="getFullscreen()">full screen</button>
+  </div>
+</template>
+
+<script>
+// @ is an alias to /src
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+export default {
+  data() {
+    return { flag: false };
+  },
+  mounted() {
+    this.startShow();
+  },
+  methods: {
+    getFullscreen() {
+      if (this.flag) {
+        this.flag = false;
+        this.startShow();
+      } else {
+        this.flag = true;
+        this.startShow();
+      }
+    },
+    startShow() {
+      const new_width = window.innerWidth / 2;
+      const new_height = window.innerHeight / 2;
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(
+        75,
+        new_width / new_height,
+        0.1,
+        1000
+      );
+      const renderer = new THREE.WebGLRenderer({
+        canvas: document.querySelector("#bg"),
+      });
+
+      renderer.setPixelRatio(window.devicePixelRatio);
+      if (this.flag) {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      } else {
+        renderer.setSize(new_width, new_height);
+      }
+
+      camera.position.setZ(30);
+
+      renderer.render(scene, camera);
+
+      // 1. Geometry the {x,y,z} points that makeup a shape
+      const geometry = new THREE.TorusGeometry(10, 3, 16, 100);
+      // 2. Material the wrapping papper for an object   this one is no light required
+      // const material = new THREE.MeshBasicMaterial({
+      //   color: 0xff6347,
+      //   wireframe: true,
+      // });
+      // this one need a ligit
+      const material = new THREE.MeshStandardMaterial({ color: 0xff6347 });
+      const torus = new THREE.Mesh(geometry, material);
+
+      scene.add(torus);
+
+      // add a light
+      const pointLight = new THREE.PointLight(0xffffff);
+      // 添加光源后要给光源添加位置
+      pointLight.position.set(5, 5, 5);
+      // another light
+      const ambientLight = new THREE.AmbientLight(0xffffff);
+      // 然后再将光源添加进scene
+      scene.add(pointLight, ambientLight);
+
+      // lighthelper
+      const lightHelper = new THREE.PointLightHelper(pointLight);
+
+      const gridHelper = new THREE.GridHelper(200, 50);
+      scene.add(lightHelper, gridHelper);
+
+      // 使用鼠标控制
+      const controls = new OrbitControls(camera, renderer.domElement);
+
+      // 不用一次又一次的call render，在这里写一个animation实现
+      function animate() {
+        requestAnimationFrame(animate);
+
+        torus.rotation.x += 0.01;
+        torus.rotation.y += 0.005;
+        torus.rotation.z += 0.01;
+
+        controls.update();
+
+        renderer.render(scene, camera);
+      }
+
+      animate();
+    },
+  },
+};
+</script>
